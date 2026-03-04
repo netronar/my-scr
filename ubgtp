@@ -1,0 +1,64 @@
+-- Телепорт к игроку с обходом античита UBG
+local function teleportToTarget(targetPlayer)
+    local localPlayer = game.Players.LocalPlayer
+    if not targetPlayer or not targetPlayer.Character then return end
+    
+    local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
+    local localRoot = localPlayer.Character:FindFirstChild("HumanoidRootPart")
+    if not targetRoot or not localRoot then return end
+    
+    -- Сохраняем оригинальную позицию
+    local originalPos = localRoot.Position
+    
+    -- Метод 1: Плавный телепорт с заморозкой
+    local function smoothTeleport()
+        -- Отключаем коллизию временно
+        localPlayer.Character.HumanoidRootPart.CanCollide = false
+        
+        -- Телепортируемся чуть выше цели
+        local targetPos = targetRoot.Position + Vector3.new(0, 5, 0)
+        
+        -- Разбиваем телепорт на несколько шагов
+        for i = 1, 3 do
+            local midPos = originalPos:Lerp(targetPos, i/3)
+            localRoot.CFrame = CFrame.new(midPos)
+            task.wait(0.05) -- Маленькая задержка между шагами
+        end
+        
+        -- Финальная позиция
+        localRoot.CFrame = CFrame.new(targetPos)
+        task.wait(0.1)
+        
+        -- Включаем коллизию обратно
+        localPlayer.Character.HumanoidRootPart.CanCollide = true
+    end
+    
+    -- Метод 2: Телепорт через Character + Velocity
+    local function velocityTeleport()
+        -- Замораживаем цель и себя
+        local targetHumanoid = targetPlayer.Character:FindFirstChild("Humanoid")
+        local localHumanoid = localPlayer.Character:FindFirstChild("Humanoid")
+        
+        if targetHumanoid then targetHumanoid.AutoRotate = false end
+        if localHumanoid then localHumanoid.AutoRotate = false end
+        
+        -- Используем BodyVelocity для перемещения
+        local bv = Instance.new("BodyVelocity")
+        bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+        bv.Velocity = (targetRoot.Position - localRoot.Position).Unit * 200
+        bv.Parent = localRoot
+        
+        task.wait(0.3)
+        bv:Destroy()
+        
+        -- Возвращаем настройки
+        if targetHumanoid then targetHumanoid.AutoRotate = true end
+        if localHumanoid then localHumanoid.AutoRotate = true end
+    end
+    
+    -- Пробуем методы по очереди
+    local success, err = pcall(smoothTeleport)
+    if not success then
+        pcall(velocityTeleport)
+    end
+end
