@@ -1,0 +1,958 @@
+-- ROMANIZ SCRIPT V22.7 | С Fast Change методом
+local old = game:GetService("CoreGui"):FindFirstChild("RomanizScript")
+if old then old:Destroy() end
+
+local SG = Instance.new("ScreenGui", game:GetService("CoreGui"))
+SG.Name = "RomanizScript"
+SG.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+SG.ResetOnSpawn = false
+
+local Main = Instance.new("Frame", SG)
+Main.Size = UDim2.new(0, 520, 0, 620)
+Main.Position = UDim2.new(0.5, -260, 0.5, -310)
+Main.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+Main.BorderSizePixel = 0
+local MainCorner = Instance.new("UICorner", Main)
+MainCorner.CornerRadius = UDim.new(0, 12)
+
+-- ХЕДЕР
+local Header = Instance.new("Frame", Main)
+Header.Size = UDim2.new(1, 0, 0, 45)
+Header.BackgroundColor3 = Color3.fromRGB(70, 50, 100)
+Header.BorderSizePixel = 0
+local HeaderCorner = Instance.new("UICorner", Header)
+HeaderCorner.CornerRadius = UDim.new(0, 12)
+
+local Title = Instance.new("TextLabel", Header)
+Title.Size = UDim2.new(1, -60, 1, 0)
+Title.Position = UDim2.new(0, 15, 0, 0)
+Title.Text = "ROMANIZ SCRIPT V22.7 | FAST CHANGE"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.TextXAlignment = Enum.TextXAlignment.Left
+Title.BackgroundTransparency = 1
+Title.Font = Enum.Font.SourceSansBold
+Title.TextSize = 20
+
+local CloseBtn = Instance.new("TextButton", Header)
+CloseBtn.Size = UDim2.new(0, 35, 0, 35)
+CloseBtn.Position = UDim2.new(1, -40, 0, 5)
+CloseBtn.Text = "×"
+CloseBtn.TextColor3 = Color3.new(1, 1, 1)
+CloseBtn.TextSize = 30
+CloseBtn.BackgroundColor3 = Color3.fromRGB(180, 50, 50)
+CloseBtn.BorderSizePixel = 0
+local CloseCorner = Instance.new("UICorner", CloseBtn)
+CloseCorner.CornerRadius = UDim.new(1, 0)
+
+CloseBtn.MouseButton1Click:Connect(function()
+    SG:Destroy()
+end)
+
+-- ЛОГИКА ПЕРЕМЕЩЕНИЯ
+local UIS = game:GetService("UserInputService")
+local dragging, dragStart, startPos
+Header.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+        dragging = true
+        dragStart = input.Position
+        startPos = Main.Position
+        local connection; connection = UIS.InputEnded:Connect(function(inputEnd)
+            if inputEnd.UserInputType == Enum.UserInputType.MouseButton1 or inputEnd.UserInputType == Enum.UserInputType.Touch then
+                dragging = false
+                connection:Disconnect()
+            end
+        end)
+    end
+end)
+UIS.InputChanged:Connect(function(input)
+    if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+        local delta = input.Position - dragStart
+        Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+end)
+
+-- ПАНЕЛИ
+local SideBar = Instance.new("Frame", Main)
+SideBar.Size = UDim2.new(0, 140, 1, -65)
+SideBar.Position = UDim2.new(0, 10, 0, 55)
+SideBar.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+local SideCorner = Instance.new("UICorner", SideBar)
+SideCorner.CornerRadius = UDim.new(0, 10)
+
+local Content = Instance.new("Frame", Main)
+Content.Size = UDim2.new(1, -170, 1, -70)
+Content.Position = UDim2.new(0, 160, 0, 60)
+Content.BackgroundTransparency = 1
+
+local Pages = {}
+local function CreatePage(name)
+    local p = Instance.new("ScrollingFrame", Content)
+    p.Size = UDim2.new(1, 0, 1, 0)
+    p.BackgroundTransparency = 1
+    p.Visible = false
+    p.ScrollBarThickness = 4
+    p.ScrollBarImageColor3 = Color3.fromRGB(140, 100, 220)
+    p.CanvasSize = UDim2.new(0, 0, 0, 0)
+    local layout = Instance.new("UIListLayout", p)
+    layout.Padding = UDim.new(0, 10)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        p.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+    end)
+    
+    Pages[name] = p
+    return p
+end
+
+local pPlayer = CreatePage("Player")
+local pVisual = CreatePage("Visuals")
+local pTeleport = CreatePage("Teleport")
+local pWorld = CreatePage("World")
+local pBypass = CreatePage("Bypass")
+pPlayer.Visible = true
+
+local function AddTab(name, y, page)
+    local b = Instance.new("TextButton", SideBar)
+    b.Size = UDim2.new(0.9, 0, 0, 45)
+    b.Position = UDim2.new(0.05, 0, 0, y)
+    b.Text = name
+    b.BackgroundColor3 = Color3.fromRGB(90, 70, 130)
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 18
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    b.MouseButton1Click:Connect(function()
+        for _, v in pairs(Pages) do v.Visible = false end
+        page.Visible = true
+    end)
+end
+
+AddTab("ИГРОК", 5, pPlayer)
+AddTab("ВИЗУАЛЫ", 55, pVisual)
+AddTab("ТЕЛЕПОРТ", 105, pTeleport)
+AddTab("МИР", 155, pWorld)
+AddTab("ОБХОД", 205, pBypass)
+
+-- --- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ---
+local function CreateSection(parent, title)
+    local section = Instance.new("Frame", parent)
+    section.Size = UDim2.new(0.95, 0, 0, 0)
+    section.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+    section.BackgroundTransparency = 0.3
+    section.BorderSizePixel = 0
+    section.AutomaticSize = Enum.AutomaticSize.Y
+    Instance.new("UICorner", section).CornerRadius = UDim.new(0, 8)
+    
+    local titleLabel = Instance.new("TextLabel", section)
+    titleLabel.Size = UDim2.new(1, -20, 0, 30)
+    titleLabel.Position = UDim2.new(0, 10, 0, 5)
+    titleLabel.Text = title
+    titleLabel.TextColor3 = Color3.fromRGB(200, 200, 255)
+    titleLabel.Font = Enum.Font.SourceSansBold
+    titleLabel.TextSize = 18
+    titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    titleLabel.BackgroundTransparency = 1
+    
+    local content = Instance.new("Frame", section)
+    content.Size = UDim2.new(1, -20, 0, 0)
+    content.Position = UDim2.new(0, 10, 0, 35)
+    content.BackgroundTransparency = 1
+    content.AutomaticSize = Enum.AutomaticSize.Y
+    
+    local layout = Instance.new("UIListLayout", content)
+    layout.Padding = UDim.new(0, 8)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    return content
+end
+
+-- --- СОЗДАТЕЛЬ ЭЛЕМЕНТОВ ---
+local function CreateToggle(parent, text, callback, default)
+    local b = Instance.new("TextButton", parent)
+    b.Size = UDim2.new(1, 0, 0, 40)
+    b.Text = text .. ": OFF"
+    b.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.Font = Enum.Font.SourceSansBold
+    b.TextSize = 18
+    Instance.new("UICorner", b).CornerRadius = UDim.new(0, 8)
+    
+    local state = default or false
+    if state then
+        b.Text = text .. ": ON"
+        b.BackgroundColor3 = Color3.fromRGB(110, 80, 160)
+    end
+    
+    b.MouseButton1Click:Connect(function()
+        state = not state
+        b.Text = text .. ": " .. (state and "ON" or "OFF")
+        b.BackgroundColor3 = state and Color3.fromRGB(110, 80, 160) or Color3.fromRGB(60, 60, 70)
+        callback(state)
+    end)
+    return b, state
+end
+
+local function CreateDropdown(parent, text, options, default, callback)
+    local container = Instance.new("Frame", parent)
+    container.Size = UDim2.new(1, 0, 0, 70)
+    container.BackgroundTransparency = 1
+    container.Name = "DropdownContainer"
+    
+    local label = Instance.new("TextLabel", container)
+    label.Size = UDim2.new(1, 0, 0, 25)
+    label.Text = text
+    label.TextColor3 = Color3.new(1, 1, 1)
+    label.BackgroundTransparency = 1
+    label.TextSize = 16
+    label.Font = Enum.Font.SourceSansBold
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local button = Instance.new("TextButton", container)
+    button.Size = UDim2.new(1, 0, 0, 35)
+    button.Position = UDim2.new(0, 0, 0, 30)
+    button.Text = default or options[1]
+    button.BackgroundColor3 = Color3.fromRGB(70, 70, 80)
+    button.TextColor3 = Color3.new(1, 1, 1)
+    button.Font = Enum.Font.SourceSans
+    button.TextSize = 16
+    Instance.new("UICorner", button).CornerRadius = UDim.new(0, 6)
+    
+    local dropdown = Instance.new("ScrollingFrame", container)
+    dropdown.Size = UDim2.new(1, 0, 0, 200)
+    dropdown.Position = UDim2.new(0, 0, 0, 67)
+    dropdown.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    dropdown.Visible = false
+    dropdown.ScrollBarThickness = 4
+    dropdown.ZIndex = 10
+    dropdown.BorderSizePixel = 0
+    Instance.new("UICorner", dropdown).CornerRadius = UDim.new(0, 6)
+    
+    local layout = Instance.new("UIListLayout", dropdown)
+    layout.Padding = UDim.new(0, 2)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    
+    local selected = default or options[1]
+    
+    for _, opt in ipairs(options) do
+        local optBtn = Instance.new("TextButton", dropdown)
+        optBtn.Size = UDim2.new(1, 0, 0, 35)
+        optBtn.Text = opt
+        optBtn.BackgroundColor3 = opt == selected and Color3.fromRGB(110, 80, 160) or Color3.fromRGB(60, 60, 70)
+        optBtn.TextColor3 = Color3.new(1, 1, 1)
+        optBtn.Font = Enum.Font.SourceSans
+        optBtn.TextSize = 16
+        optBtn.ZIndex = 11
+        optBtn.BorderSizePixel = 0
+        Instance.new("UICorner", optBtn).CornerRadius = UDim.new(0, 4)
+        
+        optBtn.MouseButton1Click:Connect(function()
+            selected = opt
+            button.Text = opt
+            dropdown.Visible = false
+            for _, b in pairs(dropdown:GetChildren()) do
+                if b:IsA("TextButton") then
+                    b.BackgroundColor3 = b.Text == selected and Color3.fromRGB(110, 80, 160) or Color3.fromRGB(60, 60, 70)
+                end
+            end
+            callback(opt)
+        end)
+    end
+    
+    button.MouseButton1Click:Connect(function()
+        dropdown.Visible = not dropdown.Visible
+    end)
+    
+    return container, function() return selected end
+end
+
+local function CreateSlider(parent, text, min, max, step, default, callback)
+    local container = Instance.new("Frame", parent)
+    container.Size = UDim2.new(1, 0, 0, 50)
+    container.BackgroundTransparency = 1
+    
+    local l = Instance.new("TextLabel", container)
+    l.Size = UDim2.new(1, 0, 0, 25)
+    l.Text = text .. ": " .. default
+    l.TextColor3 = Color3.new(1, 1, 1)
+    l.BackgroundTransparency = 1
+    l.TextSize = 16
+    l.Font = Enum.Font.SourceSansBold
+    l.TextXAlignment = Enum.TextXAlignment.Left
+    
+    local f = Instance.new("Frame", container)
+    f.Size = UDim2.new(1, 0, 0, 10)
+    f.Position = UDim2.new(0, 0, 0, 30)
+    f.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    Instance.new("UICorner", f).CornerRadius = UDim.new(1, 0)
+    
+    local bar = Instance.new("Frame", f)
+    bar.Size = UDim2.new((default - min) / (max - min), 0, 1, 0)
+    bar.BackgroundColor3 = Color3.fromRGB(140, 100, 220)
+    Instance.new("UICorner", bar).CornerRadius = UDim.new(1, 0)
+    
+    local val = default
+    
+    local function update(input)
+        local pos = math.clamp((input.Position.X - f.AbsolutePosition.X) / f.AbsoluteSize.X, 0, 1)
+        val = math.clamp(math.floor(((min + (max - min) * pos) / step) + 0.5) * step, min, max)
+        bar.Size = UDim2.new((val - min) / (max - min), 0, 1, 0)
+        l.Text = text .. ": " .. val
+        callback(val)
+    end
+    
+    f.InputBegan:Connect(function(i) 
+        if i.UserInputType == Enum.UserInputType.MouseButton1 or i.UserInputType == Enum.UserInputType.Touch then
+            local m; m = UIS.InputChanged:Connect(function(inp) 
+                if inp.UserInputType == Enum.UserInputType.MouseMovement or inp.UserInputType == Enum.UserInputType.Touch then 
+                    update(inp) 
+                end 
+            end)
+            local e; e = UIS.InputEnded:Connect(function(inp) 
+                if inp.UserInputType == Enum.UserInputType.MouseButton1 or inp.UserInputType == Enum.UserInputType.Touch then 
+                    m:Disconnect() 
+                    e:Disconnect() 
+                end 
+            end)
+            update(i)
+        end 
+    end)
+    
+    return container, function() return val end
+end
+
+-- --- СЕКЦИЯ ИГРОК ---
+local playerSection = CreateSection(pPlayer, "ПЕРЕДВИЖЕНИЕ")
+
+-- Скорость: слайдер + тумблер
+local speedContainer = Instance.new("Frame", playerSection)
+speedContainer.Size = UDim2.new(1, 0, 0, 90)
+speedContainer.BackgroundTransparency = 1
+
+local curWS, wsActive = 100, false
+local bypassThreads = {}
+local fastChangeConnection = nil
+
+local function stopBypassThreads()
+    for _, thread in pairs(bypassThreads) do
+        if thread then
+            coroutine.close(thread)
+        end
+    end
+    bypassThreads = {}
+    
+    if fastChangeConnection then
+        fastChangeConnection:Disconnect()
+        fastChangeConnection = nil
+    end
+end
+
+local function applySpeed(value)
+    if not wsActive then return end
+    
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    
+    local humanoid = char:FindFirstChild("Humanoid")
+    if not humanoid then return end
+    
+    local root = char:FindFirstChild("HumanoidRootPart")
+    if not root then return end
+    
+    local method = _G.wsBypassMethod or "Стандартный"
+    
+    -- Очищаем старые методы
+    stopBypassThreads()
+    if root:FindFirstChild("SpeedBypassBV") then
+        root.SpeedBypassBV:Destroy()
+    end
+    
+    print("Применяем метод:", method, "со скоростью:", value)
+    
+    if method == "Стандартный" then
+        humanoid.WalkSpeed = value
+        
+    elseif method == "BodyVelocity" then
+        humanoid.WalkSpeed = 16
+        
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "SpeedBypassBV"
+        bv.MaxForce = Vector3.new(4000, 0, 4000)
+        bv.Parent = root
+        
+        local thread = coroutine.create(function()
+            while wsActive and _G.wsBypassMethod == "BodyVelocity" do
+                if humanoid and humanoid.MoveDirection.Magnitude > 0 then
+                    bv.Velocity = humanoid.MoveDirection * value
+                else
+                    bv.Velocity = Vector3.new(0, bv.Velocity.Y, 0)
+                end
+                task.wait()
+            end
+            if root and root:FindFirstChild("SpeedBypassBV") then
+                root.SpeedBypassBV:Destroy()
+            end
+        end)
+        table.insert(bypassThreads, thread)
+        coroutine.resume(thread)
+        
+    elseif method == "CFrame Manipulation" then
+        humanoid.WalkSpeed = 16
+        
+        local thread = coroutine.create(function()
+            while wsActive and _G.wsBypassMethod == "CFrame Manipulation" do
+                if humanoid.MoveDirection.Magnitude > 0 then
+                    local move = humanoid.MoveDirection * value * 0.03
+                    root.CFrame = root.CFrame + move
+                end
+                task.wait(0.03)
+            end
+        end)
+        table.insert(bypassThreads, thread)
+        coroutine.resume(thread)
+        
+    elseif method == "Fast Change" then
+        -- НОВЫЙ МЕТОД: быстрая смена скорости в цикле
+        humanoid.WalkSpeed = 16 -- Начальная скорость
+        
+        fastChangeConnection = game:GetService("RunService").Heartbeat:Connect(function()
+            if wsActive and _G.wsBypassMethod == "Fast Change" and humanoid and humanoid.Parent then
+                -- Постоянно меняем скорость взад-вперед
+                local current = humanoid.WalkSpeed
+                if current < value then
+                    humanoid.WalkSpeed = math.min(current + 5, value)
+                elseif current > value then
+                    humanoid.WalkSpeed = math.max(current - 5, value)
+                end
+                
+                -- Добавляем небольшие флуктуации чтобы античит не замечал
+                if math.random() > 0.7 then
+                    humanoid.WalkSpeed = humanoid.WalkSpeed + math.random(-2, 2)
+                end
+            end
+        end)
+        
+    elseif method == "Legacy" then
+        humanoid.WalkSpeed = value
+        humanoid:ChangeState(Enum.HumanoidStateType.Running)
+    end
+end
+
+local speedSlider, getSpeed = CreateSlider(speedContainer, "СКОРОСТЬ", 16, 1000, 10, 100, function(v) 
+    curWS = v
+    applySpeed(v)
+end)
+speedSlider.Position = UDim2.new(0, 0, 0, 0)
+speedSlider.Size = UDim2.new(1, 0, 0, 50)
+
+local speedToggle, _ = CreateToggle(speedContainer, "ВКЛ/ВЫКЛ СКОРОСТЬ", function(s)
+    wsActive = s
+    local char = game.Players.LocalPlayer.Character
+    if char and char:FindFirstChild("Humanoid") then
+        if s then
+            applySpeed(curWS)
+        else
+            char.Humanoid.WalkSpeed = 16
+            stopBypassThreads()
+            local root = char:FindFirstChild("HumanoidRootPart")
+            if root and root:FindFirstChild("SpeedBypassBV") then
+                root.SpeedBypassBV:Destroy()
+            end
+        end
+    end
+end, false)
+speedToggle.Position = UDim2.new(0, 0, 0, 55)
+speedToggle.Size = UDim2.new(1, 0, 0, 35)
+speedToggle.Text = "СКОРОСТЬ: OFF"
+
+-- Прыжок
+local jumpContainer = Instance.new("Frame", playerSection)
+jumpContainer.Size = UDim2.new(1, 0, 0, 90)
+jumpContainer.BackgroundTransparency = 1
+
+local curJP, jpActive = 150, false
+local jumpSlider, getJump = CreateSlider(jumpContainer, "ПРЫЖОК", 50, 500, 5, 150, function(v)
+    curJP = v
+    if jpActive and game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local h = game.Players.LocalPlayer.Character.Humanoid
+        h.UseJumpPower = true
+        h.JumpPower = v
+    end
+end)
+jumpSlider.Position = UDim2.new(0, 0, 0, 0)
+jumpSlider.Size = UDim2.new(1, 0, 0, 50)
+
+local jumpToggle, _ = CreateToggle(jumpContainer, "ВКЛ/ВЫКЛ ПРЫЖОК", function(s)
+    jpActive = s
+    if game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid") then
+        local h = game.Players.LocalPlayer.Character.Humanoid
+        h.UseJumpPower = true
+        h.JumpPower = s and curJP or 50
+    end
+end, false)
+jumpToggle.Position = UDim2.new(0, 0, 0, 55)
+jumpToggle.Size = UDim2.new(1, 0, 0, 35)
+jumpToggle.Text = "ПРЫЖОК: OFF"
+
+-- Остальные функции игрока
+local flyS, flying = 50, false
+CreateSlider(playerSection, "СКОР. ПОЛЕТА", 10, 500, 10, 50, function(v) flyS = v end)
+
+CreateToggle(playerSection, "ПОЛЕТ (WASD)", function(s)
+    flying = s
+    local char = game.Players.LocalPlayer.Character
+    if not char then return end
+    local hrp = char:FindFirstChild("HumanoidRootPart")
+    if not hrp then return end
+    
+    if s then 
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "RomanizFly"
+        bv.MaxForce = Vector3.new(1e6, 1e6, 1e6)
+        bv.Parent = hrp
+        
+        task.spawn(function() 
+            while flying do 
+                local cam = workspace.CurrentCamera.CFrame
+                local dir = Vector3.new(0,0,0)
+                
+                if UIS:IsKeyDown(Enum.KeyCode.W) then dir = dir + cam.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.S) then dir = dir - cam.LookVector end
+                if UIS:IsKeyDown(Enum.KeyCode.A) then dir = dir - cam.RightVector end
+                if UIS:IsKeyDown(Enum.KeyCode.D) then dir = dir + cam.RightVector end
+                
+                if hrp and hrp:FindFirstChild("RomanizFly") then
+                    if dir.Magnitude > 0 then
+                        hrp.RomanizFly.Velocity = dir.Unit * flyS
+                    else
+                        hrp.RomanizFly.Velocity = Vector3.new(0, 0.1, 0)
+                    end
+                end
+                task.wait()
+            end
+            if hrp and hrp:FindFirstChild("RomanizFly") then
+                hrp.RomanizFly:Destroy()
+            end
+        end)
+    end
+end)
+
+CreateToggle(playerSection, "NOCLIP", function(s) 
+    _G.nc = s
+    task.spawn(function() 
+        while _G.nc do 
+            local char = game.Players.LocalPlayer.Character
+            if char then
+                for _, p in pairs(char:GetDescendants()) do 
+                    if p:IsA("BasePart") then 
+                        p.CanCollide = false 
+                    end 
+                end 
+            end
+            task.wait() 
+        end
+        local char = game.Players.LocalPlayer.Character
+        if char then
+            for _, p in pairs(char:GetDescendants()) do 
+                if p:IsA("BasePart") then 
+                    p.CanCollide = true 
+                end 
+            end 
+        end
+    end)
+end)
+
+CreateToggle(playerSection, "БЕСКОНЕЧНЫЙ ПРЫЖОК", function(s) _G.infJ = s end)
+
+CreateToggle(playerSection, "ANTI-AFK", function(s) 
+    _G.afk = s
+    if s then 
+        game.Players.LocalPlayer.Idled:Connect(function()
+            if _G.afk then 
+                game:GetService("VirtualUser"):CaptureController()
+                game:GetService("VirtualUser"):ClickButton2(Vector2.new()) 
+            end 
+        end) 
+    end
+end)
+
+-- --- СЕКЦИЯ ОБХОДА АНТИЧИТА ---
+local bypassSection = CreateSection(pBypass, "ОБХОД WALKSPEED")
+
+local bypassInfo = Instance.new("TextLabel", bypassSection)
+bypassInfo.Size = UDim2.new(1, 0, 0, 40)
+bypassInfo.Text = "Выберите метод обхода античита для скорости"
+bypassInfo.TextColor3 = Color3.fromRGB(255, 200, 100)
+bypassInfo.BackgroundTransparency = 1
+bypassInfo.TextSize = 14
+bypassInfo.TextWrapped = true
+bypassInfo.Font = Enum.Font.SourceSans
+
+local currentMethodLabel = Instance.new("TextLabel", bypassSection)
+currentMethodLabel.Size = UDim2.new(1, 0, 0, 25)
+currentMethodLabel.Text = "Текущий метод: Стандартный"
+currentMethodLabel.TextColor3 = Color3.fromRGB(150, 255, 150)
+currentMethodLabel.BackgroundTransparency = 1
+currentMethodLabel.TextSize = 16
+currentMethodLabel.Font = Enum.Font.SourceSansBold
+
+local descContainer = Instance.new("Frame", bypassSection)
+descContainer.Size = UDim2.new(1, 0, 0, 60)
+descContainer.BackgroundTransparency = 1
+descContainer.Name = "DescriptionContainer"
+
+local descLabel = Instance.new("TextLabel", descContainer)
+descLabel.Size = UDim2.new(1, 0, 0, 60)
+descLabel.Text = "Стандартный метод без обхода"
+descLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+descLabel.BackgroundTransparency = 1
+descLabel.TextSize = 14
+descLabel.TextWrapped = true
+descLabel.Font = Enum.Font.SourceSans
+
+local bypassOptions = {
+    "Стандартный",
+    "BodyVelocity", 
+    "CFrame Manipulation",
+    "Fast Change",  -- Заменил Hyper Speed на Fast Change
+    "Legacy"
+}
+
+local bypassDescriptions = {
+    ["Стандартный"] = "Обычная установка WalkSpeed. Работает если нет античита.",
+    ["BodyVelocity"] = "Использует BodyVelocity для движения. Обходит большинство античитов.",
+    ["CFrame Manipulation"] = "Телепортирует персонаж каждый тик. Рискованно, но эффективно.",
+    ["Fast Change"] = "Быстрая смена скорости в цикле Heartbeat. Твой уникальный метод!",
+    ["Legacy"] = "Старый метод с изменением состояния. Работает в старых играх."
+}
+
+local function updateDescription(method)
+    descLabel.Text = bypassDescriptions[method] or "Нет описания"
+end
+
+local bypassDropdown, getMethod = CreateDropdown(bypassSection, "МЕТОД ОБХОДА", bypassOptions, "Стандартный", function(method)
+    _G.wsBypassMethod = method
+    currentMethodLabel.Text = "Текущий метод: " .. method
+    updateDescription(method)
+    
+    -- Если скорость включена, применяем новый метод
+    if wsActive then
+        applySpeed(curWS)
+    end
+end)
+
+updateDescription("Стандартный")
+
+-- --- СЕКЦИЯ ВИЗУАЛЫ ---
+local visualSection = CreateSection(pVisual, "ОСНОВНЫЕ")
+
+CreateToggle(visualSection, "ESP HIGHLIGHT", function(s) 
+    _G.espH = s
+    if not s then 
+        for _, p in pairs(game.Players:GetPlayers()) do 
+            if p.Character and p.Character:FindFirstChild("Highlight") then 
+                p.Character.Highlight:Destroy() 
+            end 
+        end
+    else 
+        task.spawn(function() 
+            while _G.espH do 
+                for _, p in pairs(game.Players:GetPlayers()) do 
+                    if p ~= game.Players.LocalPlayer and p.Character then 
+                        local h = p.Character:FindFirstChild("Highlight") 
+                        if not h then
+                            h = Instance.new("Highlight", p.Character)
+                        end
+                        h.FillColor = Color3.fromRGB(160, 100, 255)
+                        h.Enabled = true
+                    end 
+                end 
+                task.wait(1) 
+            end 
+        end) 
+    end
+end)
+
+-- ТРАСЕРЫ
+local tracers = {}
+local tracerEnabled = false
+local tracerConnection = nil
+local playerRemovingConnection = nil
+
+local function clearTracers()
+    for _, line in pairs(tracers) do
+        if line then
+            pcall(function() 
+                line.Visible = false
+                line:Remove() 
+            end)
+        end
+    end
+    tracers = {}
+end
+
+local function getPlayerHeadPosition(player)
+    if not player.Character then return nil end
+    local head = player.Character:FindFirstChild("Head")
+    if head then return head.Position end
+    local root = player.Character:FindFirstChild("HumanoidRootPart")
+    if root then return root.Position + Vector3.new(0, 1.5, 0) end
+    return nil
+end
+
+local function setupTracers()
+    clearTracers()
+    
+    playerRemovingConnection = game.Players.PlayerRemoving:Connect(function(player)
+        if tracers[player] then
+            pcall(function() 
+                tracers[player].Visible = false
+                tracers[player]:Remove() 
+            end)
+            tracers[player] = nil
+        end
+    end)
+    
+    tracerConnection = game:GetService("RunService").RenderStepped:Connect(function()
+        if not tracerEnabled then return end
+        
+        local localPlayer = game.Players.LocalPlayer
+        if not localPlayer then return end
+        
+        local camera = workspace.CurrentCamera
+        if not camera then return end
+        
+        local localHeadPos = getPlayerHeadPosition(localPlayer)
+        if not localHeadPos then 
+            for _, line in pairs(tracers) do
+                line.Visible = false
+            end
+            return 
+        end
+        
+        local startPos, onScreen = camera:WorldToViewportPoint(localHeadPos)
+        if not onScreen then 
+            for _, line in pairs(tracers) do
+                line.Visible = false
+            end
+            return 
+        end
+        
+        local start2D = Vector2.new(startPos.X, startPos.Y)
+        local activePlayers = 0
+        
+        for _, player in pairs(game.Players:GetPlayers()) do
+            if player ~= localPlayer and player.Character then
+                local targetHeadPos = getPlayerHeadPosition(player)
+                if targetHeadPos then
+                    local endPos, onScreenTarget = camera:WorldToViewportPoint(targetHeadPos)
+                    
+                    if onScreenTarget then
+                        if not tracers[player] then
+                            local line = Drawing.new("Line")
+                            line.Visible = false
+                            line.Color = Color3.fromRGB(255, 100, 255)
+                            line.Thickness = 1.5
+                            line.Transparency = 1
+                            tracers[player] = line
+                        end
+                        
+                        local line = tracers[player]
+                        line.From = start2D
+                        line.To = Vector2.new(endPos.X, endPos.Y)
+                        line.Visible = true
+                        activePlayers = activePlayers + 1
+                    else
+                        if tracers[player] then
+                            tracers[player].Visible = false
+                        end
+                    end
+                else
+                    if tracers[player] then
+                        tracers[player].Visible = false
+                    end
+                end
+            end
+        end
+        
+        if activePlayers == 0 then
+            for _, line in pairs(tracers) do
+                line.Visible = false
+            end
+        end
+        
+        for player, line in pairs(tracers) do
+            if not game.Players:FindFirstChild(player.Name) or not player.Character then
+                pcall(function() 
+                    line.Visible = false
+                    line:Remove() 
+                end)
+                tracers[player] = nil
+            end
+        end
+    end)
+end
+
+CreateToggle(visualSection, "TRACER ESP (ОТ ПЕРСОНАЖА)", function(s)
+    tracerEnabled = s
+    
+    if s then
+        if tracerConnection then
+            tracerConnection:Disconnect()
+            tracerConnection = nil
+        end
+        if playerRemovingConnection then
+            playerRemovingConnection:Disconnect()
+            playerRemovingConnection = nil
+        end
+        clearTracers()
+        setupTracers()
+    else
+        if tracerConnection then
+            tracerConnection:Disconnect()
+            tracerConnection = nil
+        end
+        if playerRemovingConnection then
+            playerRemovingConnection:Disconnect()
+            playerRemovingConnection = nil
+        end
+        clearTracers()
+    end
+end)
+
+-- --- СЕКЦИЯ МИР ---
+local worldSection = CreateSection(pWorld, "НАСТРОЙКИ МИРА")
+
+local originalBrightness = game:GetService("Lighting").Brightness
+local originalGlobalShadows = game:GetService("Lighting").GlobalShadows
+local originalClockTime = game:GetService("Lighting").ClockTime
+local originalAmbient = game:GetService("Lighting").Ambient
+local originalOutdoorAmbient = game:GetService("Lighting").OutdoorAmbient
+
+CreateToggle(worldSection, "FULLBRIGHT (СВЕТ)", function(s)
+    local lighting = game:GetService("Lighting")
+    
+    if s then
+        lighting.Brightness = 2
+        lighting.GlobalShadows = false
+        lighting.ClockTime = 14
+        lighting.Ambient = Color3.new(1, 1, 1)
+        lighting.OutdoorAmbient = Color3.new(1, 1, 1)
+        lighting.FogEnd = 100000
+        lighting.FogStart = 0
+    else
+        lighting.Brightness = originalBrightness
+        lighting.GlobalShadows = originalGlobalShadows
+        lighting.ClockTime = originalClockTime
+        lighting.Ambient = originalAmbient
+        lighting.OutdoorAmbient = originalOutdoorAmbient
+    end
+end)
+
+CreateToggle(worldSection, "FPS BOOSTER", function(s) 
+    if s then 
+        for _, v in pairs(game:GetDescendants()) do 
+            if v:IsA("DataModelMesh") then 
+                v.TextureID = "" 
+            elseif v:IsA("Decal") then 
+                v.Transparency = 1 
+            elseif v:IsA("ParticleEmitter") or v:IsA("Smoke") or v:IsA("Fire") then
+                v.Enabled = false
+            end
+        end
+        settings().Rendering.QualityLevel = 1
+    end
+end)
+
+CreateToggle(worldSection, "CLICK TP (CTRL+LMB)", function(s) _G.clickTP = s end)
+
+-- --- ТЕЛЕПОРТ ---
+local ScrollL = Instance.new("ScrollingFrame", pTeleport)
+ScrollL.Size = UDim2.new(1, 0, 1, 0)
+ScrollL.BackgroundTransparency = 1
+ScrollL.ScrollBarThickness = 4
+ScrollL.ScrollBarImageColor3 = Color3.fromRGB(140, 100, 220)
+ScrollL.CanvasSize = UDim2.new(0, 0, 0, 0)
+
+local UIListL = Instance.new("UIListLayout", ScrollL)
+UIListL.Padding = UDim.new(0, 5)
+UIListL.SortOrder = Enum.SortOrder.Name
+
+UIListL:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+    ScrollL.CanvasSize = UDim2.new(0, 0, 0, UIListL.AbsoluteContentSize.Y + 10)
+end)
+
+local function UpdateList()
+    for _, child in pairs(ScrollL:GetChildren()) do 
+        if child:IsA("Frame") then 
+            child:Destroy() 
+        end 
+    end
+    
+    for _, player in pairs(game.Players:GetPlayers()) do 
+        if player ~= game.Players.LocalPlayer then
+            local F = Instance.new("Frame", ScrollL)
+            F.Size = UDim2.new(0.95, 0, 0, 45)
+            F.BackgroundColor3 = Color3.fromRGB(45, 45, 50)
+            Instance.new("UICorner", F).CornerRadius = UDim.new(0, 6)
+            
+            local L = Instance.new("TextLabel", F)
+            L.Size = UDim2.new(0.7, 0, 1, 0)
+            L.Position = UDim2.new(0, 10, 0, 0)
+            L.Text = player.DisplayName .. "\n(@" .. player.Name .. ")"
+            L.TextColor3 = Color3.new(1, 1, 1)
+            L.BackgroundTransparency = 1
+            L.TextXAlignment = Enum.TextXAlignment.Left
+            L.TextSize = 14
+            L.Font = Enum.Font.SourceSansBold
+            
+            local B = Instance.new("TextButton", F)
+            B.Size = UDim2.new(0.2, 0, 0.8, 0)
+            B.Position = UDim2.new(0.75, 0, 0.1, 0)
+            B.Text = "ТП"
+            B.BackgroundColor3 = Color3.fromRGB(80, 160, 80)
+            B.TextColor3 = Color3.new(1, 1, 1)
+            B.TextSize = 18
+            B.Font = Enum.Font.SourceSansBold
+            Instance.new("UICorner", B).CornerRadius = UDim.new(0, 4)
+            
+            B.MouseButton1Click:Connect(function() 
+                if player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+                    local localChar = game.Players.LocalPlayer.Character
+                    if localChar and localChar:FindFirstChild("HumanoidRootPart") then
+                        localChar.HumanoidRootPart.CFrame = player.Character.HumanoidRootPart.CFrame
+                    end
+                end 
+            end)
+        end 
+    end
+end
+
+UpdateList()
+game.Players.PlayerAdded:Connect(UpdateList)
+game.Players.PlayerRemoving:Connect(UpdateList)
+
+-- Обработка клик ТП
+UIS.InputBegan:Connect(function(i)
+    if _G.clickTP and i.UserInputType == Enum.UserInputType.MouseButton1 and UIS:IsKeyDown(Enum.KeyCode.LeftControl) then 
+        local m = game.Players.LocalPlayer:GetMouse()
+        if m.Target then
+            local char = game.Players.LocalPlayer.Character
+            if char and char:FindFirstChild("HumanoidRootPart") then
+                char.HumanoidRootPart.CFrame = CFrame.new(m.Hit.p + Vector3.new(0,3,0))
+            end
+        end 
+    end 
+end)
+
+-- Обработка бесконечного прыжка
+UIS.JumpRequest:Connect(function() 
+    if _G.infJ then 
+        local char = game.Players.LocalPlayer.Character
+        if char and char:FindFirstChild("Humanoid") then
+            char.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end 
+end)
+
+print("ROMANIZ SCRIPT V22.7 ЗАГРУЖЕН | Fast Change метод добавлен")
